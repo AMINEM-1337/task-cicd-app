@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TaskFlow - Task Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="app-wrapper">
+
+    <header class="header">
+        <div>
+            <h1>TaskFlow</h1>
+            <p>Organize your daily tasks in one place</p>
+        </div>
+        <span class="project-badge">CI/CD Ready App</span>
+    </header>
+
+    <section class="stats-grid">
+        <div class="stat-card">
+          <h3>{{ total_tasks }}</h3>
+          <p>Total Tasks</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>{{ pending_tasks }}</h3>
+            <p>Pending</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>{{ done_tasks }}</h3>
+            <p>Completed</p>
+        </div>
+    </section>
+
+    <section class="card">
+        <form action="/add" method="POST" class="task-form">
+            <input type="text" name="title" placeholder="Add a new task..." required>
+            <button type="submit">+ Add Task</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <div class="section-title">
+            <h2>Tasks</h2>
+            <span>{{ tasks|length }} total</span>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Task</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for task in tasks %}
+                <tr>
+                    <td>#{{ task.id }}</td>
+                    <td class="task-title">{{ task.title }}</td>
+                    <td>
+                        <span class="status {{ task.status|lower }}">
+                            {{ task.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if task.status != 'Done' %}
+                        <a href="/done/{{ task.id }}" class="btn done">Mark Done</a>
+                        {% endif %}
+                        <a href="/delete/{{ task.id }}" class="btn delete">Delete</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="empty">No tasks yet. Add your first task above.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+</div>
+
+</body>
+</html>
