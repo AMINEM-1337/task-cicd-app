@@ -27,6 +27,7 @@ def init_db():
 
 @app.route("/")
 def index():
+    init_db()
     conn = get_db_connection()
     tasks = conn.execute("SELECT * FROM tasks ORDER BY id DESC").fetchall()
     conn.close()
@@ -38,6 +39,7 @@ def add_task():
     title = request.form.get("title")
 
     if title:
+        init_db()
         conn = get_db_connection()
         conn.execute("INSERT INTO tasks (title) VALUES (?)", (title,))
         conn.commit()
@@ -48,6 +50,7 @@ def add_task():
 
 @app.route("/done/<int:task_id>")
 def mark_done(task_id):
+    init_db()
     conn = get_db_connection()
     conn.execute("UPDATE tasks SET status = 'Done' WHERE id = ?", (task_id,))
     conn.commit()
@@ -57,6 +60,7 @@ def mark_done(task_id):
 
 @app.route("/delete/<int:task_id>")
 def delete_task(task_id):
+    init_db()
     conn = get_db_connection()
     conn.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
     conn.commit()
@@ -66,4 +70,4 @@ def delete_task(task_id):
 
 if __name__ == "__main__":
     init_db()
-    app.run(host="0.0.0.0", port=5000,)
+    app.run(host="0.0.0.0", port=5000)
