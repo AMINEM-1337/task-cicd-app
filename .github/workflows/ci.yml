@@ -71,8 +71,8 @@ jobs:
           cat gunicorn.log
           kill "$APP_PID" 2>/dev/null || true
           exit 1
-
-            - name: Create deployment artifact
+          
+      - name: Create deployment artifact
         run: |
           tar \
             --exclude='./.git' \
@@ -91,6 +91,7 @@ jobs:
           path: ${{ runner.temp }}/taskflow-artifact.tar.gz
           if-no-files-found: error
           retention-days: 30
+
 
   docker-build-and-push:
     name: Docker Build and Push
