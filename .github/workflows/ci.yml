@@ -1,7 +1,10 @@
-name: CI Pipeline
+name: CI/CD Security Pipeline
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
   workflow_dispatch:
@@ -11,7 +14,8 @@ permissions:
   packages: write
 
 jobs:
-  build-and-check:
+  build-test-security-artifact:
+    name: Build, Test, Security, and Artifact
     runs-on: ubuntu-latest
 
     steps:
@@ -22,12 +26,13 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
 
-      - name: Install dependencies
+      - name: Install application dependencies and CI tools
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest ruff
+          pip install pytest ruff bandit pip-audit gunicorn
 
       - name: Check Python syntax
         run: python -m py_compile app.py
@@ -35,11 +40,53 @@ jobs:
       - name: Run Ruff linting
         run: ruff check .
 
+      - name: Run Bandit security scan
+        run: bandit -r . -x ./venv,./tests -ll
+
+      - name: Run dependency vulnerability scan
+        run: pip-audit -r requirements.txt
+
       - name: Run unit tests
-        run: pytest
+        run: pytest tests/test_unit.py -v
+
+      - name: Run integration tests
+        run: pytest tests/test_integration.py -v
+
+      - name: Run Gunicorn smoke test
+        run: |
+          gunicorn --bind 127.0.0.1:8000 app:app > gunicorn.log 2>&1 &
+          APP_PID=$!
+
+          for attempt in {1..10}; do
+            if curl --fail --silent http://127.0.0.1:8000 > /dev/null; then
+              echo "Gunicorn smoke test passed."
+              kill "$APP_PID"
+              wait "$APP_PID" 2>/dev/null || true
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "Gunicorn smoke test failed."
+          cat gunicorn.log
+          kill "$APP_PID" 2>/dev/null || true
+          exit 1
+
+      - name: Create deployment artifact
+        run: |
+          tar             --exclude='./.git'             --exclude='./.github'             --exclude='./venv'             --exclude='./__pycache__'             --exclude='./*.pyc'             --exclude='./tasks.db'             --exclude='./gunicorn.log'             -czf taskflow-artifact.tar.gz .
+
+      - name: Upload deployment artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: taskflow-artifact
+          path: taskflow-artifact.tar.gz
+          if-no-files-found: error
+          retention-days: 30
 
   docker-build-and-push:
-    needs: build-and-check
+    name: Docker Build and Push
+    needs: build-test-security-artifact
     runs-on: ubuntu-latest
 
     steps:
@@ -54,7 +101,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
