@@ -72,15 +72,23 @@ jobs:
           kill "$APP_PID" 2>/dev/null || true
           exit 1
 
-      - name: Create deployment artifact
+            - name: Create deployment artifact
         run: |
-          tar             --exclude='./.git'             --exclude='./.github'             --exclude='./venv'             --exclude='./__pycache__'             --exclude='./*.pyc'             --exclude='./tasks.db'             --exclude='./gunicorn.log'             -czf taskflow-artifact.tar.gz .
+          tar \
+            --exclude='./.git' \
+            --exclude='./.github' \
+            --exclude='./venv' \
+            --exclude='./__pycache__' \
+            --exclude='./*.pyc' \
+            --exclude='./tasks.db' \
+            --exclude='./gunicorn.log' \
+            -czf "${RUNNER_TEMP}/taskflow-artifact.tar.gz" .
 
       - name: Upload deployment artifact
         uses: actions/upload-artifact@v4
         with:
           name: taskflow-artifact
-          path: taskflow-artifact.tar.gz
+          path: ${{ runner.temp }}/taskflow-artifact.tar.gz
           if-no-files-found: error
           retention-days: 30
 
