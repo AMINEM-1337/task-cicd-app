@@ -3,8 +3,6 @@ import sqlite3
 
 app = Flask(__name__)
 
-x=5
-
 DATABASE = "tasks.db"
 
 
