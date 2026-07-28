@@ -43,6 +43,9 @@ jobs:
       - name: Check Ruff formatting
         run: ruff format --check .
 
+      - name: Check Ruff formatting
+        run: ruff format --check .
+
       - name: Run Bandit security scan
         run: bandit -r . -x ./venv,./tests -ll
 

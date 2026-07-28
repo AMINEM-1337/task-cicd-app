@@ -14,13 +14,15 @@ def get_db_connection():
 
 def init_db():
     conn = get_db_connection()
-    conn.execute("""
+    conn.execute(
+        """
         CREATE TABLE IF NOT EXISTS tasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'Pending'
         )
-    """)
+        """
+    )
     conn.commit()
     conn.close()
 
@@ -52,7 +54,10 @@ def add_task():
 def mark_done(task_id):
     init_db()
     conn = get_db_connection()
-    conn.execute("UPDATE tasks SET status = 'Done' WHERE id = ?", (task_id,))
+    conn.execute(
+        "UPDATE tasks SET status = 'Done' WHERE id = ?",
+        (task_id,),
+    )
     conn.commit()
     conn.close()
     return redirect(url_for("index"))
@@ -69,4 +74,4 @@ def delete_task(task_id):
 
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=False)
+    app.run(host="0.0.0.0", port=5000, debug=False)
